@@ -3,13 +3,11 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function LoginPage() {
-  const { session, signIn, signUp } = useAuth()
+  const { session, signIn } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
-  const [email, setEmail] = useState('')
+  const [brokerId, setBrokerId] = useState('')
   const [password, setPassword] = useState('')
-  const [companyName, setCompanyName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -26,22 +24,10 @@ export function LoginPage() {
     setSubmitting(true)
 
     try {
-      if (mode === 'login') {
-        await signIn(email, password)
-        navigate(redirectTo, { replace: true })
-        return
-      }
-
-      const needsEmailConfirmation = await signUp(email, password, companyName)
-      if (needsEmailConfirmation) {
-        setError('Check your email to confirm your account, then log in.')
-        setMode('login')
-        return
-      }
-
+      await signIn(brokerId, password)
       navigate(redirectTo, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(err instanceof Error ? err.message : 'Invalid Broker ID or password.')
     } finally {
       setSubmitting(false)
     }
@@ -50,41 +36,24 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-stone-50 px-4 py-10">
       <div className="w-full max-w-lg rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-semibold text-stone-900">
-          {mode === 'login' ? 'Broker login' : 'Create broker account'}
-        </h1>
+        <h1 className="text-3xl font-semibold text-stone-900">Broker login</h1>
         <p className="mt-2 text-lg text-stone-600">
-          Manage your property listings.
+          Enter your Broker ID and password to manage listings.
         </p>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-          {mode === 'signup' && (
-            <label className="block">
-              <span className="mb-2 block text-lg font-medium text-stone-800">
-                Company name
-              </span>
-              <input
-                type="text"
-                required
-                value={companyName}
-                onChange={(event) => setCompanyName(event.target.value)}
-                className="w-full rounded-xl border border-stone-300 px-4 py-3 text-lg outline-none focus:border-stone-500"
-                autoComplete="organization"
-              />
-            </label>
-          )}
-
           <label className="block">
             <span className="mb-2 block text-lg font-medium text-stone-800">
-              Email
+              Broker ID
             </span>
             <input
-              type="email"
+              type="text"
               required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={brokerId}
+              onChange={(event) => setBrokerId(event.target.value)}
+              placeholder="e.g. admin1"
               className="w-full rounded-xl border border-stone-300 px-4 py-3 text-lg outline-none focus:border-stone-500"
-              autoComplete="email"
+              autoComplete="username"
             />
           </label>
 
@@ -95,11 +64,10 @@ export function LoginPage() {
             <input
               type="password"
               required
-              minLength={6}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="w-full rounded-xl border border-stone-300 px-4 py-3 text-lg outline-none focus:border-stone-500"
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              autoComplete="current-password"
             />
           </label>
 
@@ -114,31 +82,13 @@ export function LoginPage() {
             disabled={submitting}
             className="w-full rounded-xl bg-stone-900 px-4 py-4 text-xl font-semibold text-white hover:bg-stone-800 disabled:opacity-60"
           >
-            {submitting
-              ? 'Please wait…'
-              : mode === 'login'
-                ? 'Log in'
-                : 'Create account'}
+            {submitting ? 'Logging in…' : 'LOGIN'}
           </button>
         </form>
 
-        <p className="mt-6 text-lg text-stone-600">
-          {mode === 'login' ? 'New broker?' : 'Already have an account?'}{' '}
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === 'login' ? 'signup' : 'login')
-              setError(null)
-            }}
-            className="font-semibold text-stone-900 underline"
-          >
-            {mode === 'login' ? 'Create account' : 'Log in'}
-          </button>
-        </p>
-
         <Link
           to="/"
-          className="mt-4 inline-block text-lg text-stone-500 hover:text-stone-800"
+          className="mt-6 inline-block text-lg text-stone-500 hover:text-stone-800"
         >
           Back to site
         </Link>

@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
-import { ensureBrokerProfile, fetchBrokerForUser } from '@/lib/broker'
+import { fetchBrokerForUser } from '@/lib/broker'
 import { supabase } from '@/lib/supabase'
 import type { Broker } from '@/types/database'
 
@@ -17,8 +17,7 @@ type AuthContextValue = {
   user: User | null
   broker: Broker | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, companyName: string) => Promise<boolean>
+  signIn: (brokerId: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   refreshBroker: () => Promise<void>
 }
@@ -85,37 +84,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (brokerId: string, password: string) => {
+    const trimmedId = brokerId.trim()
+    const email = trimmedId.includes('@')
+      ? trimmedId
+      : `${trimmedId.toLowerCase()}@realestate-app.com`
+
     const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      email,
       password,
     })
     if (error) throw error
   }, [])
-
-  const signUp = useCallback(
-    async (email: string, password: string, companyName: string) => {
-      const trimmedCompany = companyName.trim()
-      if (!trimmedCompany) {
-        throw new Error('Company name is required.')
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-      })
-      if (error) throw error
-
-      if (data.session?.user) {
-        const profile = await ensureBrokerProfile(data.session.user.id, trimmedCompany)
-        setBroker(profile)
-        return false
-      }
-
-      return true
-    },
-    [],
-  )
 
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
@@ -130,11 +110,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       broker,
       loading,
       signIn,
-      signUp,
       signOut,
       refreshBroker,
     }),
-    [session, broker, loading, signIn, signUp, signOut, refreshBroker],
+    [session, broker, loading, signIn, signOut, refreshBroker],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
