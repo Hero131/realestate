@@ -14,9 +14,32 @@ export function PropertyFilters({ filters, onChange }: PropertyFiltersProps) {
     onChange({ ...filters, [key]: value })
   }
 
+  const hasActiveFilters = Boolean(
+    filters.location.trim() || filters.propertyType || filters.maxBudget.trim(),
+  )
+
+  function handleClear() {
+    onChange({
+      location: '',
+      propertyType: '',
+      maxBudget: '',
+    })
+  }
+
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6">
-      <h2 className="text-2xl font-semibold text-stone-900">Search</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold text-stone-900">Search</h2>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="rounded-xl border border-stone-300 bg-stone-100 px-4 py-2 text-base font-medium text-stone-700 hover:bg-stone-200"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
 
       <div className="mt-5 space-y-4">
         <label className="block">
